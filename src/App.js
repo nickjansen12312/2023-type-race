@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import SnippetSelector from './SnippetSelector';
 
 function App() {
   const buttonTextItems = [
@@ -16,7 +17,30 @@ function App() {
   const [userText, setUserText] = useState('');
   const [snippet, setSnippet] = useState('');
   const [gameState, setGameState] = useState(initialGameState);
-  
+  const [wins, setWins] = useState(null);
+  const [hasError, setHasError] = useState(false);
+  const [films, setFilms] = useState([]);
+
+    useEffect(() => {
+    document.title = gameState.victory ? 'Victory!' : '';
+  }, [gameState.victory]);
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch("https://ghibliapi.vercel.app/films?limit=3");
+      const filmsData = await response.json();
+      
+      setFilms(filmsData);
+    } catch (err) {
+       setHasError(true)
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+
   const updateUserText = (event) => {
     setUserText(event.target.value);
 
@@ -27,12 +51,17 @@ function App() {
         endTime: new Date().getTime() - gameState.startTime
       });
     }
+    console.log(`updating user text to ${event.target.value}`)
   };
 
-  const chooseSnippet = (index) => {
-    setSnippet (buttonTextItems[index]);
+  const chooseSnippet = selectedSnippet => {
+    console.log('Chose snippet!')
+    console.log(selectedSnippet);
+    setSnippet (selectedSnippet);
     setGameState({...gameState, startTime: new Date().getTime() });
   }
+
+
 
   return (
     <div>
@@ -44,9 +73,14 @@ function App() {
       <input onChange={updateUserText} value = {userText}/>
       <hr />
       {buttonTextItems.map((textItem, index) => <button onClick={() => chooseSnippet(index)}>{textItem}</button>)}
+      <SnippetSelector
+      films={films}
+      chooseSnippet={chooseSnippet}
+      />
     </div>
   );
 }
+
 
 
 export default App;
